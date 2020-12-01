@@ -35,7 +35,7 @@ class SPIMaster(Module, AutoCSR):
         self.irq         = Signal()
         self.mosi        = Signal(data_width)
         self.miso        = Signal(data_width)
-        self.cs          = Signal(len(pads.cs_n), reset=1)
+        self.cs          = Signal(len(pads.cs_n), reset=0)
         self.loopback    = Signal()
         self.clk_divider = Signal(16, reset=math.ceil(sys_clk_freq/spi_clk_freq))
 
@@ -105,7 +105,7 @@ class SPIMaster(Module, AutoCSR):
         # Chip Select generation -------------------------------------------------------------------
         if hasattr(pads, "cs_n"):
             for i in range(len(pads.cs_n)):
-                self.sync += pads.cs_n[i].eq(~self.cs[i] | ~cs_enable)
+                self.sync += pads.cs_n[i].eq(~self.cs[i]) # | ~cs_enable)
 
         # Master Out Slave In (MOSI) generation (generated on spi_clk falling edge) ----------------
         mosi_data  = Signal(data_width)
@@ -154,7 +154,7 @@ class SPIMaster(Module, AutoCSR):
         ]
         if with_cs:
             self._cs       = CSRStorage(fields=[
-                CSRField("sel", len(self.cs), reset=1, description="Write ``1`` to corresponding bit to enable Xfer for chip.")
+                CSRField("sel", len(self.cs), reset=0, description="Write ``1`` to corresponding bit to enable Xfer for chip.")
             ], description="SPI Chip Select.")
             self.comb += self.cs.eq(self._cs.storage)
         if with_loopback:
