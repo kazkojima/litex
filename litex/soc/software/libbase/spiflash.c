@@ -10,6 +10,9 @@
 #define WREN_CMD         0x06
 #define CE_CMD           0xc7
 #define SE_CMD           0xd8
+#define WRSR_CMD         0x01
+#define RDSR1_CMD        0x35
+#define RDID_CMD         0x9f
 
 #define BITBANG_CLK         (1 << 1)
 #define BITBANG_CS_N        (1 << 2)
@@ -154,6 +157,75 @@ void write_to_flash(unsigned int addr, const unsigned char *c, unsigned int len)
        addr += written;
        len -= written;
    }
+}
+
+unsigned int flash_readid(void)
+{
+    int i;
+    unsigned int id = 0;
+
+    spiflash_bitbang_en_write(1);
+
+    flash_write_byte(RDID_CMD);
+    spiflash_bitbang_write(BITBANG_DQ_INPUT);
+    for(i = 0; i < 24; i++) {
+	id <<= 1;
+	spiflash_bitbang_write(BITBANG_CLK | BITBANG_DQ_INPUT);
+	id |= spiflash_miso_read();
+	spiflash_bitbang_write(0           | BITBANG_DQ_INPUT);
+    }
+    spiflash_bitbang_write(0);
+    spiflash_bitbang_write(BITBANG_CS_N);
+
+    spiflash_bitbang_en_write(0);
+
+    return id;
+}
+
+unsigned char flash_readsr(int hi)
+{
+    int i;
+    unsigned char sr = 0;
+
+    spiflash_bitbang_en_write(1);
+
+    flash_write_byte(hi ? RDSR1_CMD : RDSR_CMD);
+    spiflash_bitbang_write(BITBANG_DQ_INPUT);
+    for(i = 0; i < 8; i++) {
+	sr <<= 1;
+	spiflash_bitbang_write(BITBANG_CLK | BITBANG_DQ_INPUT);
+	sr |= spiflash_miso_read();
+	spiflash_bitbang_write(0           | BITBANG_DQ_INPUT);
+    }
+    spiflash_bitbang_write(0);
+    spiflash_bitbang_write(BITBANG_CS_N);
+
+    spiflash_bitbang_en_write(0);
+
+    return sr;
+}
+
+unsigned int flash_write_protect(unsigned int bp)
+{
+    int i;
+    unsigned int id = 0;
+
+    spiflash_bitbang_en_write(1);
+    wait_for_device_ready();
+
+    flash_write_byte(WREN_CMD);
+    spiflash_bitbang_write(BITBANG_CS_N);
+
+    flash_write_byte(WRSR_CMD);
+    flash_write_byte(bp & 0x7c);
+    flash_write_byte(0);
+
+    spiflash_bitbang_write(BITBANG_CS_N);
+
+    wait_for_device_ready();
+    spiflash_bitbang_en_write(0);
+
+    return id;
 }
 
 #endif /* CSR_SPIFLASH_BASE && SPIFLASH_PAGE_SIZE */
