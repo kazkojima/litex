@@ -73,3 +73,68 @@ static void flash_erase_handler(int nb_params, char **params)
 define_command(flash_erase, flash_erase_handler, "Erase whole flash", SPIFLASH_CMDS);
 #endif
 
+/**
+ * Command "flash_readid"
+ *
+ * Read ID
+ *
+ */
+#if (defined CSR_SPIFLASH_BASE && defined SPIFLASH_PAGE_SIZE)
+static void flash_readid_handler(int nb_params, char **params)
+{
+    unsigned int id;
+
+    id = flash_readid();
+    printf("Flash id %08x\n", id);
+}
+
+define_command(flash_readid, flash_readid_handler, "Read flash ID", SPIFLASH_CMDS);
+#endif
+
+/**
+ * Command "flash_readsr"
+ *
+ * Read stauts register
+ *
+ */
+#if (defined CSR_SPIFLASH_BASE && defined SPIFLASH_PAGE_SIZE)
+static void flash_readsr_handler(int nb_params, char **params)
+{
+    unsigned char sr0, sr1;
+
+    sr0 = flash_readsr(0);
+    sr1 = flash_readsr(1);
+    printf("Status %02x%02x\n", sr1, sr0);
+}
+
+define_command(flash_readsr, flash_readsr_handler, "Read status register", SPIFLASH_CMDS);
+#endif
+
+/**
+ * Command "flash_write_protect"
+ *
+ * Write block protect bits of status register
+ *
+ */
+#if (defined CSR_SPIFLASH_BASE && defined SPIFLASH_PAGE_SIZE)
+static void flash_write_protect_handler(int nb_params, char **params)
+{
+    unsigned int prot;
+    char *c;
+
+    if (nb_params != 1) {
+	printf("flash_write_protect <bits>");
+	return;
+    }
+
+    prot = strtoul(params[0], &c, 0);
+    if (*c != 0 || prot > 31) {
+	printf("Incorrect bits");
+	return;
+    }
+
+    flash_write_protect(prot << 2);
+}
+
+define_command(flash_write_protect, flash_write_protect_handler, "Write protect bits (0-31)", SPIFLASH_CMDS);
+#endif
