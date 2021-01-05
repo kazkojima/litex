@@ -143,6 +143,8 @@ int main(int i, char **c)
     printf("--========== \e[1mInitialization\e[0m ============--\n");
 #ifdef CSR_ETHMAC_BASE
 	eth_init();
+	// Colorlight i5 needs this to disable TX data to clock delay.
+	mdio_write(0, 0x1c, 0x8c00);
 #endif
 #ifdef CSR_SDRAM_BASE
 	sdr_ok = sdram_init();
