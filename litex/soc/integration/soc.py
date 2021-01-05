@@ -1342,13 +1342,15 @@ class LiteXSoC(SoC):
             phy               = phy,
             dw                = 32,
             interface         = "wishbone",
+            nrxslots          = 4,
+            ntxslots          = 4,
             endianness        = self.cpu.endianness,
             with_preamble_crc = not software_debug)
         ethmac = ClockDomainsRenamer({
             "eth_tx": phy_cd + "_tx",
             "eth_rx": phy_cd + "_rx"})(ethmac)
         setattr(self.submodules, name, ethmac)
-        ethmac_region = SoCRegion(origin=self.mem_map.get(name, None), size=0x2000, cached=False)
+        ethmac_region = SoCRegion(origin=self.mem_map.get(name, None), size=0x4000, cached=False)
         self.bus.add_slave(name=name, slave=ethmac.bus, region=ethmac_region)
         self.csr.add(name, use_loc_if_exists=True)
         if self.irq.enabled:
