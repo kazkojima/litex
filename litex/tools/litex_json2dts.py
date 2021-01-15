@@ -36,6 +36,7 @@ def generate_dts(d, initrd_start=None, initrd_size=None, polling=False):
     default_initrd_start = {
         "mor1kx":               8*mB,
         "vexriscv smp-linux" : 16*mB,
+        "vexriscv_linux" : 16*mB,
     }
     default_initrd_size = 8*mB
 
