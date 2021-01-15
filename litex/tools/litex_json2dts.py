@@ -62,14 +62,17 @@ def generate_dts(d, initrd_start=None, initrd_size=None, polling=False):
     # CPU ------------------------------------------------------------------------------------------
 
     # VexRiscv-SMP
-    if cpu_name == "vexriscv smp-linux":
+    if cpu_name == "vexriscv smp-linux" or cpu_name == "vexriscv_linux":
         dts += """
         cpus {{
             #address-cells = <1>;
             #size-cells    = <0>;
             timebase-frequency = <{sys_clk_freq}>;
 """.format(sys_clk_freq=d["constants"]["config_clock_frequency"])
-        cpus = range(int(d["constants"]["config_cpu_count"]))
+        if cpu_name == "vexriscv_linux":
+            cpus = range(1)
+        else:
+            cpus = range(int(d["constants"]["config_cpu_count"]))
         for cpu in cpus:
             dts += """
             cpu@{cpu} {{
@@ -166,6 +169,19 @@ def generate_dts(d, initrd_start=None, initrd_size=None, polling=False):
             }};
     """.format(
         plic_base   =d["memories"]["plic"]["base"],
+        cpu_mapping =("\n" + " "*20).join(["&L{} 11 &L{} 9".format(cpu, cpu) for cpu in cpus]))
+
+    elif cpu_name == "vexriscv_linux":
+        dts += """
+            intc0: interrupt-controller {{
+                compatible = "vexriscv,intc0";
+                #interrupt-cells = <1>;
+                interrupt-controller;
+                interrupts-extended = <
+                    {cpu_mapping}>;
+                status = "okay";
+            }};
+    """.format(
         cpu_mapping =("\n" + " "*20).join(["&L{} 11 &L{} 9".format(cpu, cpu) for cpu in cpus]))
 
     elif cpu_name == "mor1kx":
